@@ -16,56 +16,52 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder
-import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, BaggingRegressor
 import pickle
 
 # Load the dataset
-df = pd.read_csv('car_details.csv')
+df = pd.read_csv('Car.csv')
 
 # Sidebar for user input
 st.sidebar.header("Car Details Input")
 
 # Input fields for user to enter car details
-year = st.sidebar.slider("Year", int(df['year'].min()), int(df['year'].max()), int(df['year'].mean()))
-km_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, value=int(df['km_driven'].mean()))
-fuel = st.sidebar.selectbox("Fuel Type", df['fuel'].unique())
-seller_type = st.sidebar.selectbox("Seller Type", df['seller_type'].unique())
-transmission = st.sidebar.selectbox("Transmission", df['transmission'].unique())
-owner = st.sidebar.selectbox("Owner", df['owner'].unique())
+Year = st.sidebar.slider("Year", int(df['Year'].min()), int(df['Year'].max()), int(df['Year'].mean()))
+Km_driven = st.sidebar.number_input("Kilometers Driven", min_value=0, value=int(df['Km_driven'].mean()))
+Fuel = st.sidebar.selectbox("Fuel Type", df['Fuel'].unique())
+Seller_type = st.sidebar.selectbox("Seller Type", df['Seller_type'].unique())
+Transmission = st.sidebar.selectbox("Transmission", df['Transmission'].unique())
+Owner = st.sidebar.selectbox("Owner", df['Owner'].unique())
 
 # Preprocess user input
 user_input = pd.DataFrame({
-    'year': [year],
-    'km_driven': [km_driven],
-    'fuel': [fuel],
-    'seller_type': [seller_type],
-    'transmission': [transmission],
-    'owner': [owner]
+    'Year': [Year],
+    'Km_driven': [Km_driven],
+    'Fuel': [Fuel],
+    'Seller_type': [Seller_type],
+    'Transmission': [Transmission],
+    'Owner': [Owner]
 })
 
 # Encode categorical variables
 le = LabelEncoder()
-user_input['fuel'] = le.fit_transform(user_input['fuel'])
-user_input['seller_type'] = le.fit_transform(user_input['seller_type'])
-user_input['transmission'] = le.fit_transform(user_input['transmission'])
-user_input['owner'] = le.fit_transform(user_input['owner'])
+user_input['Fuel'] = le.fit_transform(user_input['Fuel'])
+user_input['Seller_type'] = le.fit_transform(user_input['Seller_type'])
+user_input['Transmission'] = le.fit_transform(user_input['Transmission'])
+user_input['Owner'] = le.fit_transform(user_input['Owner'])
 
 # Separate features (X) and target variable (y)
-X = df.drop(['selling_price', 'name'], axis=1)
+X = df.drop(['Selling_price', 'Name'], axis=1)
 
 # Encode categorical features in the main dataframe
-X['fuel'] = le.fit_transform(X['fuel']) # Encode 'fuel' column in the main dataframe
-X['seller_type'] = le.fit_transform(X['seller_type'])
-X['transmission'] = le.fit_transform(X['transmission'])
-X['owner'] = le.fit_transform(X['owner'])
-X = pd.get_dummies(X, columns=['transmission'])
+X['Fuel'] = le.fit_transform(X['Fuel']) # Encode 'fuel' column in the main dataframe
+X['Seller_type'] = le.fit_transform(X['Seller_type'])
+X['Transmission'] = le.fit_transform(X['Transmission'])
+X['Owner'] = le.fit_transform(X['Owner'])
 
-y = df['selling_price']
+y = df['Selling_price']
 
 
 # Split the data into training and testing sets
@@ -112,8 +108,12 @@ loaded_model = pickle.load(open('best_model.sav', 'rb'))
 
 # Make prediction
 if st.sidebar.button("Predict Selling Price"):
-    prediction = loaded_model.predict(user_input)
-    st.write(f"Predicted Selling Price: {prediction[0]}")
+    try:
+        prediction = loaded_model.predict(user_input)
+        st.write(f"Predicted Selling Price: {prediction[0]}")
+    except Exception as e:
+        st.error(f"Error during prediction: {e}")
+
 
 # Display the dataset
 st.title("Car Details Dataset")
@@ -129,27 +129,51 @@ st.title("Histograms")
 
 st.write("Distribution of Car Year")
 fig, ax = plt.subplots()
-ax.hist(df['year'])
+ax.hist(df['Year'])
 st.pyplot(fig)
 
 st.write("Distribution of Selling Price")
 fig, ax = plt.subplots()
-ax.hist(df['selling_price'])
+ax.hist(df['Selling_price'])
 st.pyplot(fig)
 
 st.write("Distribution of Kilometers Driven")
 fig, ax = plt.subplots()
-ax.hist(df['km_driven'])
+ax.hist(df['Km_driven'])
 st.pyplot(fig)
 
 # Display the scatter plot
 st.title("Scatter Plot")
 plt.figure(figsize=(8, 6))
-sns.scatterplot(x='year', y='selling_price', data=df)
+sns.scatterplot(x='Year', y='Selling_price', data=df)
 plt.title('Year vs Selling Price')
 st.pyplot(plt)
 
 # Display the pairplot
 st.title("Pairplot")
-sns.pairplot(df[['selling_price', 'km_driven', 'year']])
+sns.pairplot(df[['Selling_price', 'Km_driven', 'Year']])
 st.pyplot(plt)
+
+# Check expected feature names from training data
+expected_features = ['Year', 'Km_driven', 'Fuel', 'Seller_type', 'Owner', 'Transmission']  # Replace with your actual feature names
+
+# Ensure user_input matches expected features and order
+if set(user_input.columns) == set(expected_features) and all(user_input.columns == expected_features):
+    # Print user_input columns for debugging
+    print("user_input columns:", user_input.columns)
+
+    prediction = loaded_model.predict(user_input)
+    st.write(f"Predicted Selling Price: {prediction[0]}")
+else:
+    # One-hot encode the user_input DataFrame
+    # user_input = pd.get_dummies(user_input, columns=['Transmission'])
+    # Check to see if the user_input has the same columns as the training data
+    if set(user_input.columns) != set(expected_features):
+        st.error("Please provide data with the following features: " + ', '.join(expected_features))
+    else:
+        try:
+            prediction = loaded_model.predict(user_input)
+            st.write(f"Predicted Selling Price: {prediction[0]}")
+        except Exception as e:
+            st.error(f"Error during prediction: {e}")
+    # ... (Optional: Handle the case of missing or mismatched features)
