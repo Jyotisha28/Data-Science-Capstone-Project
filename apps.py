@@ -21,7 +21,7 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, BaggingRegressor
 import pickle
-!pip install streamlit
+
 a=pd.read_csv('car_details.csv')
 a.head(5)
 # Check for missing values
